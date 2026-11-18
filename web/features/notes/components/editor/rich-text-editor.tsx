@@ -46,6 +46,7 @@ import {
   undoRedoActionForKeyEvent,
 } from "../../undo-shortcuts";
 import { checkedItemsLabel } from "./checked-folds";
+import { ChecklistSuggestMenu } from "./checklist-suggest-menu";
 import { CodeCopyButtons } from "./code-copy-buttons";
 import { SelectionToolbar } from "./highlight-tools";
 import { LinkBubble } from "./link-bubble";
@@ -981,6 +982,12 @@ export const RichTextEditor = forwardRef<
               container={editorContainerEl}
               onAddAttachment={onAddAttachment}
               onAddLink={openLinkDialog}
+            />
+          )}
+          {!readOnly && (
+            <ChecklistSuggestMenu
+              getQuill={getQuill}
+              container={editorContainerEl}
             />
           )}
           {!linkDialogState.open && (
