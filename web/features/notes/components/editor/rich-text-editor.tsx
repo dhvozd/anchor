@@ -988,6 +988,7 @@ export const RichTextEditor = forwardRef<
             <ChecklistSuggestMenu
               getQuill={getQuill}
               container={editorContainerEl}
+              sortChecked={sortChecklistItems}
             />
           )}
           {!linkDialogState.open && (

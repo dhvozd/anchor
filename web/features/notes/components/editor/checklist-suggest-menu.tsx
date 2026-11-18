@@ -9,7 +9,6 @@ import {
   type ChecklistSuggestion,
   findChecklistSuggestions,
   matchedRanges,
-  planRevive,
 } from "../../checklist-suggest";
 import {
   LIST_FORMATS,
@@ -18,6 +17,7 @@ import {
   type QuillLine,
 } from "../../quill";
 import { deltaToLines, findLineIndexAtPosition } from "../../quill-lines";
+import { planReviveEdit } from "./checklist-revive";
 import { isSlashMenuOpen } from "./slash-menu";
 
 /** The text before the caret while the `/` menu is active. */
@@ -39,6 +39,8 @@ interface Menu {
 interface ChecklistSuggestMenuProps {
   getQuill: () => QuillInstance | null;
   container: HTMLElement | null;
+  /** The "Move checked items to the bottom" setting. */
+  sortChecked: boolean;
 }
 
 /**
@@ -91,6 +93,7 @@ function emphasise(text: string, query: string): React.ReactNode[] {
 export function ChecklistSuggestMenu({
   getQuill,
   container,
+  sortChecked,
 }: ChecklistSuggestMenuProps) {
   const [menu, setMenu] = React.useState<Menu | null>(null);
   const [active, setActive] = React.useState(-1);
@@ -224,20 +227,22 @@ export function ChecklistSuggestMenu({
       const selection = quill?.getSelection();
       if (!quill || !selection) return;
       const contents = quill.getContents();
-      const plan = planRevive(
+      const edit = planReviveEdit(
         contents,
         findLineIndexAtPosition(deltaToLines(contents.ops), selection.index),
         item.text,
+        sortChecked,
       );
-      if (!plan) return;
+      if (!edit) return;
       // One undo step brings back the typed line and the crossed-off item.
+      // The sort comes in the same change, so a fold never splits.
       quill.history.cutoff();
-      quill.updateContents(plan.remove, "user");
-      quill.updateContents(plan.uncheck, "user");
-      quill.setSelection(plan.caret, 0, "user");
+      quill.updateContents(edit.remove, "user");
+      quill.updateContents(edit.revive, "user");
+      quill.setSelection(edit.caret, 0, "user");
       quill.history.cutoff();
     },
-    [getQuill, close],
+    [getQuill, close, sortChecked],
   );
 
   // Keys go to the list before the editor sees them; nothing else is taken.
